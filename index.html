@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Smart Dashboard | Silvare Project</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>🤖 AI Text Analyzer</h1>
+        <p>Ανάλυση συναισθήματος και σύνοψη με τη δύναμη του AI.</p>
+
+        <textarea id="userInput" placeholder="Γράψε την κριτική σου εδώ..."></textarea>
+
+        <div class="rating-area">
+            <p>Η βαθμολογία σου:</p>
+            <div class="star-rating" id="starRatingContainer">
+                <span class="star" data-value="1">★</span>
+                <span class="star" data-value="2">★</span>
+                <span class="star" data-value="3">★</span>
+                <span class="star" data-value="4">★</span>
+                <span class="star" data-value="5">★</span>
+    </div>
+</div>
+
+        <button id="analyzeBtn">Ανάλυση Κειμένου</button>
+
+        <div id="resultBox" class="result-hidden" style="display: none;">
+            <h3>✨ Αποτέλεσμα AI:</h3>
+            <p><strong>Συναίσθημα:</strong> <span id="sentimentResult">-</span></p>
+            <p><strong>Σύνοψη:</strong> <span id="summaryResult">-</span></p>
+        </div>
+
+        <div id="historySection">
+            <hr>
+            <h3>📜 Πρόσφατες Αξιολογήσεις</h3>
+            <div id="evaluationsList">
+                </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
