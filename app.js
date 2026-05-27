@@ -7,6 +7,7 @@ if (!GEMINI_API_KEY) {
         localStorage.setItem('gemini_api_key', GEMINI_API_KEY);
     }
 }
+
 const analyzeButton = document.getElementById('analyzeBtn');
 const userInputArea = document.getElementById('userInput');
 const resultBox = document.getElementById('resultBox');
@@ -14,7 +15,7 @@ const evaluationsList = document.getElementById('evaluationsList');
 
 // Λογική για τα Διαδραστικά Αστέρια
 const stars = document.querySelectorAll('#starRatingContainer .star');
-let currentSelectedRating = 5; 
+let currentSelectedRating = 0; // Αρχικά 0 αστέρια (πρέπει να επιλέξει ο χρήστης)
 
 stars.forEach((star, index) => {
     star.addEventListener('mouseover', () => {
@@ -29,7 +30,7 @@ stars.forEach((star, index) => {
     });
 
     star.addEventListener('click', () => {
-        currentSelectedRating = index + 1; // Παίρνει σωστά τη βαθμολογία 1-5
+        currentSelectedRating = index + 1; 
         updateStarsDisplay();
     });
 });
@@ -50,7 +51,7 @@ function loadHistory() {
     evaluationsList.innerHTML = history.map((item, index) => `
         <div class="history-item">
             <div>
-                <strong>${'⭐'.repeat(item.stars)} | ${item.sentiment}</strong>
+                <strong>${'⭐'.repeat(item.stars || 5)} | ${item.sentiment}</strong>
                 <p style="margin: 5px 0;">${item.text}</p>
                 <small style="color: #a0aec0;">${item.date}</small>
             </div>
@@ -60,7 +61,7 @@ function loadHistory() {
 }
 
 window.deleteItem = function(index) {
-    if (confirm("Θέλεις σίγουρα να διαγράψεις αυτή την αξιολόγηση;")) {
+    if (confirm("Θελεις σίγουρα να διαγράψεις αυτή την αξιολόγηση;")) {
         const history = JSON.parse(localStorage.getItem('myEvals')) || [];
         history.splice(index, 1);
         localStorage.setItem('myEvals', JSON.stringify(history));
@@ -70,9 +71,17 @@ window.deleteItem = function(index) {
 
 loadHistory();
 
+// Η κύρια συνάρτηση ανάλυσης
 analyzeButton.addEventListener('click', async function() {
     let userText = userInputArea.value;
 
+    // ΕΛΕΓΧΟΣ 1: Αν ξέχασε τα αστέρια
+    if (currentSelectedRating === 0) {
+        alert("Παρακαλώ επίλεξε πρώτα τη βαθμολογία σου με τα αστέρια!");
+        return;
+    }
+
+    // ΕΛΕΓΧΟΣ 2: Αν ξέχασε το κείμενο
     if (userText.trim() === "") {
         alert("Γράψε κάτι πρώτα!");
         return;
@@ -81,7 +90,6 @@ analyzeButton.addEventListener('click', async function() {
     analyzeButton.innerHTML = '<span class="loader"></span> Αναμονή...';
     analyzeButton.disabled = true;
 
-    // Καθαρό prompt
     const promptInstructions = `Ανάλυσε το εξής κείμενο: "${userText}". Δώσε μου το συναίσθημα (Θετικό 😊, Αρνητικό 😡, ή Ουδέτερο 😐) και μια μικρή σύνοψη. Απάντησε αυστηρά στη μορφή: Συναίσθημα | Σύνοψη`;
 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
@@ -91,9 +99,7 @@ analyzeButton.addEventListener('click', async function() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{
-                    parts: [{ text: promptInstructions }]
-                }]
+                contents: [{ parts: [{ text: promptInstructions }] }]
             })
         });
 
@@ -121,7 +127,6 @@ analyzeButton.addEventListener('click', async function() {
         document.getElementById('summaryResult').innerText = cleanSummary;
         resultBox.style.display = "block";
 
-        // Αλλαγή Background
         if (cleanSentiment.includes("Θετικό")) {
             document.body.style.backgroundColor = "#e6fffa";
         } else if (cleanSentiment.includes("Αρνητικό")) {
@@ -130,7 +135,6 @@ analyzeButton.addEventListener('click', async function() {
             document.body.style.backgroundColor = "#f0f4f8";
         }
 
-        // Αποθήκευση
         const history = JSON.parse(localStorage.getItem('myEvals')) || [];
         history.unshift({
             text: userText,
@@ -148,15 +152,20 @@ analyzeButton.addEventListener('click', async function() {
         analyzeButton.innerHTML = "Ανάλυση Κειμένου";
         analyzeButton.disabled = false;
     }
-    // --- ΔΙΟΡΘΩΜΕΝΟ: Ενεργοποίηση ανάλυσης με το ENTER (Χωρίς αλλαγή γραμμής) ---
-userInputArea.addEventListener('keypress', function(e) {
+});
+
+// --- ΕΛΕΓΧΟΣ ENTER ΚΑΙ ΠΡΟΣΤΑΣΙΑ ΑΠΟ BUG ΑΛΛΑΓΗΣ ΓΡΑΜΜΗΣ ---
+userInputArea.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
-        e.preventDefault(); // Σταματάει ΑΜΕΣΩΣ την αλλαγή γραμμής
-        
-        // Αν το κουμπί δεν είναι απενεργοποιημένο, κάνε το κλικ
+        e.preventDefault(); // Σταματάει την αλλαγή γραμμής ακαριαία
+
+        if (currentSelectedRating === 0) {
+            alert("Παρακαλώ επίλεξε πρώτα τη βαθμολογία σου με τα αστέρια!");
+            return;
+        }
+
         if (!analyzeButton.disabled) {
             analyzeButton.click();
         }
     }
-});
 });
